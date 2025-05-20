@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./config/db";
 import adminRoutes from "./routes/adminRoutes";
-
+import employeeRoutes from "./routes/employeeRoutes";
 
 dotenv.config();
 const app = express();
@@ -18,7 +18,9 @@ app.get("/", (req, res) => {
   res.send("attendense API is running...");
 });
 
+
 app.use("/api/admin", adminRoutes);
+app.use("/api/employee", employeeRoutes);
 
 
 connectDB().then(() => {
