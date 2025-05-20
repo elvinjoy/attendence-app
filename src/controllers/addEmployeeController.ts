@@ -30,7 +30,7 @@ export const getSingleEmployee = async (req: Request, res: Response) => {
   try {
     const employee = await getEmployeeById(req.params.id);
     if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
+       res.status(404).json({ message: "Employee not found" });
     }
     res.status(200).json({ data: employee });
   } catch (error: any) {
@@ -43,7 +43,7 @@ export const updateEmployeeDetails = async (req: Request, res: Response) => {
   try {
     const updated = await updateEmployee(req.params.id, req.body);
     if (!updated) {
-      return res.status(404).json({ message: "Employee not found" });
+       res.status(404).json({ message: "Employee not found" });
     }
     res.status(200).json({ message: "Employee updated", data: updated });
   } catch (error: any) {
@@ -56,7 +56,7 @@ export const deleteEmployeeDetails = async (req: Request, res: Response) => {
   try {
     const deleted = await deleteEmployee(req.params.id);
     if (!deleted) {
-      return res.status(404).json({ message: "Employee not found" });
+       res.status(404).json({ message: "Employee not found" });
     }
     res.status(200).json({ message: "Employee deleted" });
   } catch (error: any) {
