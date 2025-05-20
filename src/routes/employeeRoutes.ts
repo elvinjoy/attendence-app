@@ -28,4 +28,4 @@ router.put("/update-employee/:id", updateEmployeeDetails);
 // Delete employee
 router.delete("/delete-employee/:id", deleteEmployeeDetails);
 
-module.exports = router; // Use CommonJS export
+export default router;
