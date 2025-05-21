@@ -1,7 +1,7 @@
 // models/attendanceModel.ts
 import mongoose from 'mongoose';
 
-// Define the Attendance Schema
+// Define the Attendance Schema based on the UI design
 const attendanceSchema = new mongoose.Schema({
   employeeId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -16,27 +16,26 @@ const attendanceSchema = new mongoose.Schema({
   status: {
     type: String,
     required: [true, 'Status is required'],
-    enum: ['present', 'absent', 'half-day', 'leave', 'work-from-home'],
-    default: 'present'
+    enum: ['Present', 'Absent', 'Half Day', 'Online'],
+    default: 'Present'
   },
   checkInTime: {
-    type: Date
+    type: String, // Store as string in format "HH:MM"
   },
   checkOutTime: {
-    type: Date
+    type: String, // Store as string in format "HH:MM"
   },
-  workHours: {
-    type: Number
+  department: {
+    type: String,
+    required: true
   },
-  notes: {
-    type: String
+  name: {
+    type: String,
+    required: true
   },
-  location: {
-    type: String
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  empId: {
+    type: String, // This is the display ID like "Emp 01" shown in the UI
+    required: true
   }
 }, { 
   timestamps: true 

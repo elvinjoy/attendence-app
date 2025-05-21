@@ -4,6 +4,7 @@ import cors from "cors";
 import { connectDB } from "./config/db";
 import adminRoutes from "./routes/adminRoutes";
 import employeeRoutes from "./routes/employeeRoutes";
+import attendanceRoutes from "./routes/attendanceRoutes";
 import path from "path";
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/admin", adminRoutes);
 app.use("/api/employee", employeeRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 connectDB().then(() => {
   app.listen(PORT, () => {
