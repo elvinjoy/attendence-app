@@ -66,9 +66,51 @@ export const createNewEmployee = async (employeeData: any) => {
   return newEmployee;
 };
 
-// Get All Employees from database
-export const getAllEmployees = async () => {
-  return await Employee.find().sort({ createdAt: -1 });
+// Get all Employees with paginated list of employees
+
+export const getAllEmployees = async (page: number = 1, limit: number = 8, searchQuery?: string) => {
+  // Calculate how many documents to skip
+  const skip = (page - 1) * limit;
+  
+  // Build the query
+  let query = {};
+  
+  // Add search functionality if search query provided
+  if (searchQuery) {
+    query = {
+      $or: [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { email: { $regex: searchQuery, $options: 'i' } },
+        { department: { $regex: searchQuery, $options: 'i' } },
+        { empId: { $regex: searchQuery, $options: 'i' } }
+      ]
+    };
+  }
+  
+  // Execute the query with pagination
+  const employees = await Employee.find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+  
+  // Get total count for pagination
+  const totalEmployees = await Employee.countDocuments(query);
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(totalEmployees / limit);
+  
+  return {
+    employees,
+    pagination: {
+      total: totalEmployees,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    }
+  };
 };
 
 // Get Employee by ID from database
