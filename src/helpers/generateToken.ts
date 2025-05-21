@@ -1,9 +1,8 @@
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
+import { ADMIN_JWT_SECRET } from "../config/db";
 
-export const generateToken = (id: string): string => {
-  return jwt.sign({ id }, process.env.JWT_SECRET!, {
+export const generateToken = (adminId: string) => {
+  return jwt.sign({ adminId }, ADMIN_JWT_SECRET, {
     expiresIn: "7d",
   });
 };

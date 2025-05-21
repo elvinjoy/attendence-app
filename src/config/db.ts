@@ -11,3 +11,5 @@ export const connectDB = async (): Promise<void> => {
     process.exit(1);
   }
 };
+
+export const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET!;

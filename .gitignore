@@ -1,2 +1,27 @@
+# Node modules
 node_modules/
+
+# Environment variables
 .env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Build directory
+dist/
+build/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploaded files
+uploads/

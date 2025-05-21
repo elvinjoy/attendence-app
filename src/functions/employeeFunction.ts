@@ -17,6 +17,7 @@ export const createNewEmployee = async (employeeData: any) => {
     email,
     mobile,
     address,
+    photo,
   } = employeeData;
 
   // Validation
@@ -40,7 +41,6 @@ export const createNewEmployee = async (employeeData: any) => {
     throw new Error('Employee already exists with this email.');
   }
 
-  // Check for duplicate employee ID
   const existingEmpId = await Employee.findOne({ empId });
   if (existingEmpId) {
     throw new Error('Employee ID already in use.');
@@ -59,6 +59,7 @@ export const createNewEmployee = async (employeeData: any) => {
     email,
     mobile,
     address,
+    photo,
   });
 
   await newEmployee.save();

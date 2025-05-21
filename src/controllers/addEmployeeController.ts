@@ -1,65 +1,138 @@
-// employeeController.ts
-// Place this file directly in your src folder or where it matches your imports
+// controllers/addEmployeeController.ts
 import { Request, Response } from "express";
-import { Employee } from "../models/employeeModel";
-import { getAllEmployees, getEmployeeById, updateEmployee, deleteEmployee } from "../functions/employeeFunction";
+import { createNewEmployee, getAllEmployees, getEmployeeById, updateEmployee, deleteEmployee } from "../functions/employeeFunction";
 
 // Create new employee
-export const addEmployee = async (req: Request, res: Response) => {
+export const addEmployee = async (req: Request, res: Response): Promise<void> => {
   try {
-    const newEmployee = new Employee(req.body);
-    await newEmployee.save();
-    res.status(201).json({ success: true, data: newEmployee });
+    const {
+      empId,
+      firstName,
+      lastName,
+      department,
+      country,
+      state,
+      city,
+      dateOfJoining,
+      dob,
+      email,
+      mobile,
+      address
+    } = req.body;
+    
+    // Check if any required field is missing
+    if (!empId || !firstName || !lastName || !department || !country || 
+        !state || !city || !dateOfJoining || !dob || !email || !mobile || !address) {
+      res.status(400).json({ message: "All fields are required." });
+      return;
+    }
+    
+    // Handle file data
+    if (!req.file) {
+      res.status(400).json({ message: "Profile image is required" });
+      return;
+    }
+    
+    // Prepare employee data object
+    const employeeData = {
+      empId,
+      firstName,
+      lastName,
+      department,
+      country,
+      state,
+      city,
+      dateOfJoining,
+      dob,
+      email,
+      mobile,
+      address,
+      photo: req.file.path
+    };
+    
+    // Create the employee
+    const newEmployee = await createNewEmployee(employeeData);
+    
+    res.status(201).json({
+      success: true,
+      message: "Employee added successfully",
+      data: newEmployee
+    });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ message: error.message || "Failed to add employee" });
   }
 };
 
 // Get all employees
-export const getEmployees = async (_req: Request, res: Response) => {
+export const getEmployees = async (req: Request, res: Response): Promise<void> => {
   try {
     const employees = await getAllEmployees();
-    res.status(200).json({ success: true, data: employees });
+    res.status(200).json({
+      success: true,
+      count: employees.length,
+      data: employees
+    });
   } catch (error: any) {
-    res.status(500).json({ message: "Failed to get employees" });
+    res.status(500).json({ message: error.message || "Failed to retrieve employees" });
   }
 };
 
-// Get a single employee by ID
-export const getSingleEmployee = async (req: Request, res: Response) => {
+// Get single employee
+export const getSingleEmployee = async (req: Request, res: Response): Promise<void> => {
   try {
     const employee = await getEmployeeById(req.params.id);
     if (!employee) {
-       res.status(404).json({ message: "Employee not found" });
+      res.status(404).json({ message: "Employee not found" });
+      return;
     }
-    res.status(200).json({ data: employee });
+    res.status(200).json({
+      success: true,
+      data: employee
+    });
   } catch (error: any) {
-    res.status(500).json({ message: "Failed to get employee" });
+    res.status(500).json({ message: error.message || "Failed to retrieve employee" });
   }
 };
 
-// Update an employee
-export const updateEmployeeDetails = async (req: Request, res: Response) => {
+// Update employee details
+export const updateEmployeeDetails = async (req: Request, res: Response): Promise<void> => {
   try {
-    const updated = await updateEmployee(req.params.id, req.body);
-    if (!updated) {
-       res.status(404).json({ message: "Employee not found" });
+    let updateData = { ...req.body };
+    
+    if (req.file) {
+      updateData.photo = req.file.path;
     }
-    res.status(200).json({ message: "Employee updated", data: updated });
+    
+    const updatedEmployee = await updateEmployee(req.params.id, updateData);
+    if (!updatedEmployee) {
+      res.status(404).json({ message: "Employee not found" });
+      return;
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: "Employee updated successfully",
+      data: updatedEmployee
+    });
   } catch (error: any) {
-    res.status(500).json({ message: error.message || "Failed to update employee" });
+    res.status(400).json({ message: error.message || "Failed to update employee" });
   }
 };
 
-// Delete an employee
-export const deleteEmployeeDetails = async (req: Request, res: Response) => {
+// Delete employee
+export const deleteEmployeeDetails = async (req: Request, res: Response): Promise<void> => {
   try {
-    const deleted = await deleteEmployee(req.params.id);
-    if (!deleted) {
-       res.status(404).json({ message: "Employee not found" });
+    const employee = await deleteEmployee(req.params.id);
+    if (!employee) {
+      res.status(404).json({ message: "Employee not found" });
+      return;
     }
-    res.status(200).json({ message: "Employee deleted" });
+    
+    res.status(200).json({
+      success: true,
+      message: "Employee deleted successfully"
+    });
   } catch (error: any) {
-    res.status(500).json({ message: "Failed to delete employee" });
+    res.status(500).json({ message: error.message || "Failed to delete employee" });
   }
 };
