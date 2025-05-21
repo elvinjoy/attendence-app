@@ -2,7 +2,7 @@
 import express from 'express';
 import {
   markEmployeeAttendance,
-  getAttendanceForDate,
+  getAttendanceForDateWithFilters,
   markBulkEmployeeAttendance
 } from '../controllers/attendanceController';
 import { adminProtect } from '../middleware/adminAuthMiddleware';
@@ -12,9 +12,9 @@ const router = express.Router();
 // Add admin authentication middleware to all routes
 router.use(adminProtect);
 
-// Get all attendance records for a specific date
+// Get attendance records for a specific date with search and pagination
 router.get('/date/:date', (req, res) => {
-  getAttendanceForDate(req, res);
+  getAttendanceForDateWithFilters(req, res);
 });
 
 // Mark attendance for a single employee

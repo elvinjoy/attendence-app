@@ -52,24 +52,55 @@ export const markAttendance = async (attendanceData: any) => {
   }
 };
 
-// Get all attendance records for a specific date
-export const getAttendanceByDate = async (date: string) => {
+// Get attendance records with search and pagination
+export const getAttendanceWithFilters = async (
+  date: string,
+  page: number = 1,
+  limit: number = 8,
+  searchQuery?: string
+) => {
   const queryDate = new Date(date);
   queryDate.setHours(0, 0, 0, 0);
   
   const nextDay = new Date(queryDate);
   nextDay.setDate(nextDay.getDate() + 1);
 
+  // Create the query for finding employees
+  let employeeQuery = {};
+  
+  // Add search functionality if search query provided
+  if (searchQuery) {
+    employeeQuery = {
+      $or: [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { empId: { $regex: searchQuery, $options: 'i' } },
+        { department: { $regex: searchQuery, $options: 'i' } },
+        { email: { $regex: searchQuery, $options: 'i' } }
+      ]
+    };
+  }
+
+  // Calculate pagination parameters
+  const skip = (page - 1) * limit;
+  
+  // Find all employees that match the search query
+  const allEmployees = await Employee.find(employeeQuery)
+    .sort({ empId: 1 })
+    .skip(skip)
+    .limit(limit);
+  
+  // Get total count of matching employees for pagination
+  const totalEmployees = await Employee.countDocuments(employeeQuery);
+  
   // Find attendance records for the specified date
   const attendanceRecords = await Attendance.find({
     date: {
       $gte: queryDate,
       $lt: nextDay
-    }
+    },
+    employeeId: { $in: allEmployees.map(emp => emp._id) }
   });
-
-  // If no records found for some employees, we'll need to get all employees
-  const allEmployees = await Employee.find({});
   
   // Create a map of existing attendance records by employee ID
   const attendanceMap = new Map();
@@ -99,7 +130,20 @@ export const getAttendanceByDate = async (date: string) => {
     }
   });
 
-  return finalAttendance;
+  // Calculate total pages
+  const totalPages = Math.ceil(totalEmployees / limit);
+
+  return {
+    attendanceRecords: finalAttendance,
+    pagination: {
+      total: totalEmployees,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    }
+  };
 };
 
 // Mark attendance for multiple employees at once (bulk update)

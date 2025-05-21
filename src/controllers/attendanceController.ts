@@ -2,7 +2,7 @@
 import { Request, Response } from 'express';
 import {
   markAttendance,
-  getAttendanceByDate,
+  getAttendanceWithFilters,
   markBulkAttendance
 } from '../functions/attendanceFunction';
 
@@ -40,10 +40,13 @@ export const markEmployeeAttendance = async (req: Request, res: Response): Promi
   }
 };
 
-// Get all attendance records for a specific date
-export const getAttendanceForDate = async (req: Request, res: Response): Promise<void> => {
+// Get attendance records with search and pagination
+export const getAttendanceForDateWithFilters = async (req: Request, res: Response): Promise<void> => {
   try {
     const { date } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 8;
+    const search = req.query.search as string;
     
     if (!date) {
       res.status(400).json({
@@ -53,12 +56,30 @@ export const getAttendanceForDate = async (req: Request, res: Response): Promise
       return;
     }
     
-    const attendanceRecords = await getAttendanceByDate(date);
+    // Validate page and limit
+    if (page < 1) {
+      res.status(400).json({ 
+        success: false, 
+        message: "Page number should be at least 1"
+      });
+      return;
+    }
+    
+    if (limit < 1 || limit > 100) {
+      res.status(400).json({ 
+        success: false, 
+        message: "Limit should be between 1 and 100"
+      });
+      return;
+    }
+    
+    const result = await getAttendanceWithFilters(date, page, limit, search);
     
     res.status(200).json({
       success: true,
-      count: attendanceRecords.length,
-      data: attendanceRecords
+      count: result.attendanceRecords.length,
+      data: result.attendanceRecords,
+      pagination: result.pagination
     });
   } catch (error: any) {
     res.status(400).json({
