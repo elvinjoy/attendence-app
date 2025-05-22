@@ -1,6 +1,6 @@
 // controllers/addEmployeeController.ts
 import { Request, Response } from "express";
-import { createNewEmployee, getAllEmployees, getEmployeeById, updateEmployee, deleteEmployee } from "../functions/employeeFunction";
+import { createNewEmployee, getAllEmployees, getEmployeeById, updateEmployee, deleteEmployee, searchEmployees } from "../functions/employeeFunction";
 
 // Create new employee
 export const addEmployee = async (req: Request, res: Response): Promise<void> => {
@@ -119,6 +119,33 @@ export const getSingleEmployee = async (req: Request, res: Response): Promise<vo
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message || "Failed to retrieve employee" });
+  }
+};
+
+export const searchEmployeesController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { query } = req.query;
+    
+    if (!query) {
+      res.status(400).json({
+        success: false,
+        message: 'Search query is required'
+      });
+      return;
+    }
+
+    const employees = await searchEmployees(query as string);
+    
+    res.status(200).json({
+      success: true,
+      count: employees.length,
+      data: employees
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 

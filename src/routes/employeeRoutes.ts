@@ -5,6 +5,7 @@ import {
   getSingleEmployee,
   updateEmployeeDetails,
   deleteEmployeeDetails,
+  searchEmployeesController
 } from "../controllers/addEmployeeController";
 
 import { adminProtect } from "../middleware/adminAuthMiddleware";
@@ -12,7 +13,7 @@ import { upload } from "../middleware/upload";
 
 const router = express.Router();
 
-// Routes with appropriate middleware
+router.get("/search", adminProtect, searchEmployeesController);
 router.post("/add-employee", adminProtect, upload.single("photo"), addEmployee);
 router.get("/all", adminProtect, getEmployees);
 router.get("/:id", adminProtect, getSingleEmployee);

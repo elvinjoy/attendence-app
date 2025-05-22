@@ -118,6 +118,30 @@ export const getEmployeeById = async (id: string) => {
   return await Employee.findById(id);
 };
 
+// Add this function to your employeeFunction.ts file
+
+export const searchEmployees = async (searchQuery: string) => {
+  if (!searchQuery || searchQuery.trim() === '') {
+    throw new Error('Search query is required');
+  }
+
+  const employees = await Employee.find({
+    $or: [
+      { empId: { $regex: searchQuery, $options: 'i' } },
+      { firstName: { $regex: searchQuery, $options: 'i' } },
+      { lastName: { $regex: searchQuery, $options: 'i' } }
+    ]
+  }).select('empId firstName lastName department').sort({ empId: 1 }).limit(20);
+
+  return employees.map(emp => ({
+    _id: emp._id,
+    empId: emp.empId,
+    name: `${emp.firstName} ${emp.lastName}`,
+    department: emp.department
+  }));
+};
+
+
 // Update Employee in database
 export const updateEmployee = async (id: string, data: any) => {
   // Validate email if it's being updated
