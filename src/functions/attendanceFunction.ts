@@ -2,6 +2,20 @@
 import { Attendance } from '../models/attendanceModel';
 import { Employee } from '../models/employeeModel';
 import mongoose from 'mongoose';
+import * as XLSX from 'xlsx';
+
+
+interface AttendanceRecord {
+  _id?: string | null;
+  employeeId: string;
+  date: Date;
+  status: string;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  department: string;
+  name: string;
+  empId: string;
+}
 
 // Mark attendance for a single employee
 export const markAttendance = async (attendanceData: any) => {
@@ -182,4 +196,85 @@ export const markBulkAttendance = async (attendanceRecords: any[]) => {
   }
 
   return await Attendance.bulkWrite(operations);
+};
+
+export const generateAttendanceExcel = (attendanceData: AttendanceRecord[], date: string): Buffer => {
+  try {
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+
+    // Prepare data for the main sheet
+    const worksheetData = [
+      // Header row
+      ['S.No', 'Employee ID', 'Employee Name', 'Department', 'Status', 'Check-In Time', 'Check-Out Time', 'Date'],
+      // Data rows
+      ...attendanceData.map((record, index) => [
+        index + 1,
+        record.empId,
+        record.name,
+        record.department,
+        record.status,
+        record.checkInTime || '-',
+        record.checkOutTime || '-',
+        new Date(record.date).toLocaleDateString()
+      ])
+    ];
+
+    // Create the main worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    // Set column widths for better formatting
+    worksheet['!cols'] = [
+      { width: 8 },   // S.No
+      { width: 12 },  // Employee ID
+      { width: 20 },  // Employee Name
+      { width: 15 },  // Department
+      { width: 12 },  // Status
+      { width: 12 },  // Check-In Time
+      { width: 12 },  // Check-Out Time
+      { width: 12 }   // Date
+    ];
+
+    // Add the main worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance Report');
+
+    // Create summary data
+    const totalEmployees = attendanceData.length;
+    const statusCounts = attendanceData.reduce((acc, record) => {
+      acc[record.status] = (acc[record.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const summaryData = [
+      ['Attendance Summary'],
+      ['Date', new Date(date).toLocaleDateString()],
+      ['Generated On', new Date().toLocaleDateString()],
+      [''],
+      ['Total Employees', totalEmployees],
+      [''],
+      ['Status Breakdown:'],
+      ...Object.entries(statusCounts).map(([status, count]) => [status, count]),
+      [''],
+      ['Attendance Percentage', `${((statusCounts['Present'] || 0) / totalEmployees * 100).toFixed(2)}%`]
+    ];
+
+    // Create summary worksheet
+    const summaryWorksheet = XLSX.utils.aoa_to_sheet(summaryData);
+    summaryWorksheet['!cols'] = [{ width: 20 }, { width: 15 }];
+
+    // Add summary worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Summary');
+
+    // Generate Excel file buffer
+    const excelBuffer = XLSX.write(workbook, { 
+      type: 'buffer', 
+      bookType: 'xlsx',
+      compression: true
+    });
+
+    return excelBuffer;
+  } catch (error) {
+    console.error('Error generating Excel file:', error);
+    throw new Error(`Excel generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 };

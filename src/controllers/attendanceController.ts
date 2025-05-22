@@ -3,8 +3,10 @@ import { Request, Response } from 'express';
 import {
   markAttendance,
   getAttendanceWithFilters,
-  markBulkAttendance
+  markBulkAttendance,
+  generateAttendanceExcel  // Changed from generateAttendancePDF
 } from '../functions/attendanceFunction';
+import { Attendance } from '../models/attendanceModel'
 
 // Mark attendance for an employee
 export const markEmployeeAttendance = async (req: Request, res: Response): Promise<void> => {
@@ -129,6 +131,78 @@ export const markBulkEmployeeAttendance = async (req: Request, res: Response): P
     res.status(400).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+export const downloadAttendanceExcel = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { date } = req.params;
+
+    if (!date) {
+      res.status(400).json({
+        success: false,
+        message: 'Date is required'
+      });
+      return;
+    }
+
+    // Create separate date objects to avoid mutation issues
+    const selectedDate = new Date(date);
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // console.log('Searching for date range:', {
+    //   requestedDate: date,
+    //   startOfDay: startOfDay.toISOString(),
+    //   endOfDay: endOfDay.toISOString()
+    // });
+
+    const attendanceDocuments = await Attendance.find({
+      date: { $gte: startOfDay, $lte: endOfDay }
+    }).sort({ name: 1 });
+
+    // console.log('Found documents:', attendanceDocuments.length);
+
+    if (attendanceDocuments.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'No attendance data found for this date'
+      });
+      return;
+    }
+
+    // Convert Mongoose documents to plain objects with the correct interface
+    const attendanceData = attendanceDocuments.map(doc => ({
+      _id: doc._id?.toString() || null,
+      employeeId: doc.employeeId.toString(),
+      date: doc.date,
+      status: doc.status,
+      checkInTime: doc.checkInTime || undefined,
+      checkOutTime: doc.checkOutTime || undefined,
+      department: doc.department,
+      name: doc.name,
+      empId: doc.empId
+    }));
+
+    // console.log('Attendance data for Excel:', attendanceData.length, 'records');
+
+    // Fixed: Call generateAttendanceExcel with correct parameters
+    const buffer = generateAttendanceExcel(attendanceData, date);
+    // console.log('Excel buffer generated, size:', buffer.length);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=attendance-${date}.xlsx`);
+    res.send(buffer);
+  } catch (error: any) {
+    console.error('Excel generation error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

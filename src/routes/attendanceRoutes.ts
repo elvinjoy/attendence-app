@@ -3,7 +3,8 @@ import express from 'express';
 import {
   markEmployeeAttendance,
   getAttendanceForDateWithFilters,
-  markBulkEmployeeAttendance
+  markBulkEmployeeAttendance,
+  downloadAttendanceExcel 
 } from '../controllers/attendanceController';
 import { adminProtect } from '../middleware/adminAuthMiddleware';
 
@@ -27,4 +28,7 @@ router.post('/mark-bulk', (req, res) => {
   markBulkEmployeeAttendance(req, res);
 });
 
+router.get('/download/:date',(req, res)=>{
+  downloadAttendanceExcel(req, res);
+});
 export default router;
